@@ -1,0 +1,13 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: update hosts file
+      blockinfile:
+        path: /etc/hosts
+        block: |
+         172.31. lb01
+         172.31. app01
+         172.31. mq01
+         172.31. mc01
+         172.31. db01

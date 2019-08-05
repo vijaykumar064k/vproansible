@@ -1,0 +1,60 @@
+---
+- hosts: appservers
+  become: true
+  gather_facts: False
+
+  tasks: 
+  - name: installing tomcat
+    package:
+      name: "{{ item }}"
+      state: latest
+      update_cache: yes
+      cache_valid_time: 86400
+    with_items:
+      - tomcat8
+      - tomcat8-admin
+      - tomcat8-docs
+      - tomcat8-common
+    tags: 
+     - package
+
+
+  - name: starting tomcat8 service
+    service:
+      name: tomcat8
+      state: started
+      enabled: yes
+
+  - name: Deploy web application war file
+    copy:
+      src: files/vprofile-v1.war
+      dest: /var/lib/tomcat8/webapps
+    tags: 
+     - deploy
+    notify:
+      Restart tomcat8
+
+  - name: Create a link to Visulpath application
+    file:
+      src: /var/lib/tomcat8/webapps/vprofile-v1.war
+      dest: /var/lib/tomcat8/webapps/vprofile
+      state: link
+    notify:
+      Restart tomcat8
+    
+  - name: Deploy web configuration file
+    template:
+      src: templates/application.j2
+      dest: /var/lib/tomcat8/webapps/vprofile-v1/WEB-INF/classes/application.properties
+      force: yes
+    tags: 
+     - package
+    notify:
+      Restart tomcat8
+  
+  handlers:
+  - name: Restart tomcat8
+    service: 
+      name: tomcat8
+      state: restarted
+
